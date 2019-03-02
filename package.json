@@ -1,0 +1,12 @@
+{
+  "name": "kirby-similar",
+  "description": "Kirby 3 Similar plugin",
+  "author": "Sonja Broda <sonja@texniq.de>",
+  "license": "MIT",
+  "version": "0.9.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/texnixe/kirby3-similar"
+  },
+  "type": "kirby-plugin"
+}

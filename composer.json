@@ -1,0 +1,21 @@
+{
+    "name": "texnixe/similar",
+    "description": "Find similar pages or files based on similarities between fields",
+    "version": "0.9.0",
+    "type": "kirby-plugin",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sonja Broda",
+            "email": "info@texniq.de"
+        }
+    ],
+    "keywords": [
+        "kirby3",
+        "kirby3-cms",
+        "kirby3-plugin"
+    ],
+    "require": {
+        "getkirby/composer-installer": "^1.1"
+    }
+}

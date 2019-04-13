@@ -115,7 +115,7 @@ class Similar
     public static function getSimilar($basis, $options = [])
     {
         $collection = $options['index']?? $basis->siblings(false);
-        if(option('texnixe.similar.cache') === true && $response = static::cache()->get(md5($basis->id().implode(',',$options)))) {
+        if(option('texnixe.similar.cache') === true && $response = static::cache()->get(md5($basis->id() . json_encode($options)))) {
             // try to get data from the cache, else generate new collection
             $data = $response['data'];
             $similar = static::getClassName($basis, array_keys($data));
@@ -126,7 +126,7 @@ class Similar
             }
             $similar = static::data($basis, $options);
             static::cache()->set(
-                md5($basis->id() . implode(',', $options)),
+                md5($basis->id() . json_encode($options)),
                 $similar,
                 option('texnixe.similar.expires')
             );

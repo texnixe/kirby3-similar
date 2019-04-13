@@ -4,7 +4,7 @@ namespace texnixe\Similar;
 /**
  * Kirby 3 Similar Plugin
  *
- * @version   0.9.0
+ * @version   1.0.0
  * @author    Sonja Broda <info@texniq.de>
  * @copyright Sonja Broda <info@texniq.de>
  * @link      https://github.com/texnixe/kirby3-similar

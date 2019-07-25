@@ -24,7 +24,9 @@ class Similar
 
     public static function flush()
     {
-        return static::cache()->flush();
+        if (static::$cache) {
+            return static::cache()->flush();
+        }
     }
 
     public static function data($basis, $options = [])

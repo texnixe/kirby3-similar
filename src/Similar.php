@@ -96,11 +96,17 @@ class Similar
         $indices = [];
         foreach($searchItems as $field => $value) {
             $comparisonArray = $item->{$field}()->split($delimiter);
-            $intersection = count(array_intersect($value[$field], $comparisonArray));
-            $union = count(array_unique(array_merge($value[$field], $comparisonArray)));
-            $indices[] =  number_format($intersection/$union * $value['factor'], 5);
+            $intersection    = count(array_intersect($value[$field], $comparisonArray));
+            $union           = count(array_unique(array_merge($value[$field], $comparisonArray)));
+            if ($union !== 0) {
+                $indices[]   = number_format($intersection/$union * $value['factor'], 5);
+            }
         }
-        return array_sum($indices)/count($indices);
+        if (($indexCount = count($indices)) !== 0) {
+            return array_sum($indices)/$indexCount;
+        } else {
+            return 0;
+        }
 
     }
 

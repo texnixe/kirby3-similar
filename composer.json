@@ -1,7 +1,7 @@
 {
     "name": "texnixe/similar",
     "description": "Find similar pages or files based on similarities between fields",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "type": "kirby-plugin",
     "license": "MIT",
     "authors": [

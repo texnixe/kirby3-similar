@@ -54,7 +54,7 @@ class Similar
              //$searchField = null;
             foreach($fields as $field => $factor) {
                 // only include fields that have values
-                $values = $basis->{$field}()->split(',');
+                $values = $basis->{$field}()->split($delimiter);
                 if(count($values) > 0) {
                     $searchItems[$field][$field] = $values;
                     $searchItems[$field]['factor'] = $factor;

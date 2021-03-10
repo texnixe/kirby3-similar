@@ -44,7 +44,7 @@ While both pages have the same number of matches, the Jaccard Index is lower in 
 
 ### Download
 
-[Download the files](https://github.com/texnixe/kirby3-related/archive/master.zip) and place them inside `site/plugins/kirby-similar`.
+[Download the files](https://github.com/texnixe/kirby3-similar/archive/master.zip) and place them inside `site/plugins/kirby-similar`.
 
 ### Git Submodule
 You can add the plugin as a Git submodule.

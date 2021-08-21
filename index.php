@@ -1,6 +1,12 @@
 <?php
 
 namespace texnixe\Similar;
+
+use Kirby\Cms\App as Kirby;
+use Kirby\Cms\Files;
+use Kirby\Cms\Pages;
+use Kirby\Exception\Exception;
+
 /**
  * Kirby 3 Similar Plugin
  *
@@ -10,34 +16,38 @@ namespace texnixe\Similar;
  * @link      https://github.com/texnixe/kirby3-similar
  * @license   MIT
  */
-
 load([
-    'texnixe\\similar\\similar' => 'src/Similar.php'
+    'texnixe\\similar\\similar' => 'lib/Similar.php'
 ], __DIR__);
 
-\Kirby::plugin('texnixe/similar', [
-    'options' => [
-        'cache' => true,
-        'expires' => (60*24*7), // minutes
+Kirby::plugin('texnixe/similar', [
+    'options'     => [
+        'cache'    => option('texnixe.similar.cache', true),
+        'expires'  => (60 * 24 * 7), // minutes
         'defaults' => [
-            'fields'          => 'tags',
-            'threshold'       => 0.1,
-            'delimiter'       => ',',
-            'languageFilter'  => false,
-        ]
+            'fields'         => 'tags',
+            'threshold'      => 0.1,
+            'delimiter'      => ',',
+            'languageFilter' => false,
+        ],
     ],
     'pageMethods' => [
         'similar' => function (array $options = []) {
-            return Similar::getSimilar($this, $options);
-        }
+            try {
+                return (new Similar($this, new Pages(), $options))->getSimilar();
+            } catch (Exception $e) {
+                return new Files();
+            }
+        },
     ],
     'fileMethods' => [
         'similar' => function (array $options = []) {
-            return Similar::getSimilar($this, $options);
-        }
+            try {
+                return (new Similar($this, new Files(), $options))->getSimilar();
+            } catch (Exception $e) {
+                return new Files();
+            }
+        },
     ],
-    'hooks'       => require 'config/hooks.php'
+    'hooks'       => require __DIR__ . '/config/hooks.php',
 ]);
-
-
-

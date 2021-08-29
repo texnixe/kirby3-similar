@@ -80,16 +80,16 @@ class Similar
 
     public function __construct($base, $collection, array $options)
     {
-        $defaults             = option('texnixe.similar.defaults');
-        $defaults['index']    = $base->siblings(false);
-        $this->options        = array_merge($defaults, $options);
-        $this->base           = $base;
-        $this->collection     = $collection;
-        $this->delimiter      = $this->options['delimiter'];
+        $defaults              = option('texnixe.similar.defaults');
+        $defaults['index']     = $base->siblings(false);
+        $this->options         = array_merge($defaults, $options);
+        $this->base            = $base;
+        $this->collection      = $collection;
+        $this->delimiter       = $this->options['delimiter'];
         $this->fields          = $this->options['fields'];
-        $this->index          = $this->options['index'];
-        $this->languageFilter = $this->options['delimiter'];
-        $this->threshold      = $this->options['threshold'];
+        $this->index           = $this->options['index'];
+        $this->languageFilter  = $this->options['delimiter'];
+        $this->threshold       = $this->options['threshold'];
     }
 
     /**
@@ -138,11 +138,11 @@ class Similar
             $intersection    = count(array_intersect($value[$field], $itemFieldValues));
             $union           = count(array_unique(array_merge($value[$field], $itemFieldValues)));
             if ($union !== 0) {
-                $indices[] = number_format($intersection/$union * $value['factor'], 5);
+                $indices[] = number_format($intersection / $union * $value['factor'], 5);
             }
         }
         if (($indexCount = count($indices)) !== 0) {
-            return array_sum($indices)/$indexCount;
+            return array_sum($indices) / $indexCount;
         }
 
         return (float)0;
@@ -187,7 +187,7 @@ class Similar
      */
     protected function getSearchItems(): array
     {
-        $searchItems = [];
+        $searchItems  = [];
         $fields       = $this->fields;
         if (is_array($fields)) {
             if (A::isAssociative($fields)) {
@@ -199,7 +199,7 @@ class Similar
                     $values = $this->base->{$field}()->split($this->delimiter);
                     if (count($values) > 0) {
                         $searchItems[$field][$field]    = $values;
-                        $searchItems[$field]['factor'] = $factor;
+                        $searchItems[$field]['factor']  = $factor;
                     }
                 }
             } else {
@@ -208,7 +208,7 @@ class Similar
                     $values = $this->base->{$field}()->split($this->delimiter);
                     if (count($values) > 0) {
                         $searchItems[$field][$field]    = $values;
-                        $searchItems[$field]['factor'] = 1;
+                        $searchItems[$field]['factor']  = 1;
                     }
                 }
             }

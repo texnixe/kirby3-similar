@@ -11,8 +11,9 @@ return $config
         'align_multiline_comment' => ['comment_type' => 'phpdocs_like'],
         'array_indentation' => true,
         'array_syntax' => ['syntax' => 'short'],
+        'binary_operator_spaces' =>
+        ['operators' => ['=>' => 'align', '=' => 'align']],
         'cast_spaces' => ['space' => 'none'],
-        // 'class_keyword_remove' => true, // replaces static::class with 'static' (won't work)
         'combine_consecutive_issets' => true,
         'combine_consecutive_unsets' => true,
         'combine_nested_dirname' => true,

@@ -2,10 +2,10 @@
 
 # Kirby Similar
 
-Kirby 3 Similar is a [Kirby CMS](https://getkirby.com) plugin that lets you find items related to the current item based on similarity between fields. For each given field, the plugin calculates the Jaccard Index and then weighs all indices based on the factor for each field.
+Find related pages or files. Kirby 3 Similar is a [Kirby CMS](https://getkirby.com) plugin that lets you find items related to the current item based on the similarity between fields. For each given field, the plugin calculates the Jaccard Index and then weighs all indices based on the factor for each field.
 
 Example use case:
-The current page has a tags field with three values (red, green, blue). You want to find all sibling pages with a minimum Jaccard Index of 0.3.
+The current page has a tags field with three values (red, green, blue). You want to find all sibling pages with a minimum Jaccard Index of 0.3 (which possible values between 0 and 1).
 
 ## Commercial Usage
 
@@ -62,7 +62,6 @@ Run these commands to update the plugin:
     $ git commit -am "Update submodules"
     $ git submodule update --init --recursive
 
-
 ## Usage
 
 ### Similar pages
@@ -97,7 +96,7 @@ You can pass an array of options:
 ```
 <?php
 $similarPages = $page->similar([
-  'index' => $page->siblings(false)->visible(),
+  'index' => $page->siblings(false)->listed(),
   'fields'         => 'tags',
   'threshold'      => 0.2,
   'delimiter'      => ',',
@@ -108,41 +107,55 @@ $similarPages = $page->similar([
 #### index
 
 The collection to search in.
-Default: `$item->siblings()`
-
+Default: `$item->siblings(false)` (The `false` argument excludes the current page from the collection)
 #### fields
 
 The name of the field to search in.
 Default: tags
 
-You can pass either a single field as string, or an array of fields with a factor that serves as multiplier:
+**Single field**
+You can pass a single field as string:
 
-```
-fields => ['tags' => 1, 'size' => 1.5, 'category' => 3]
-```
-
-You can change the factor to get better results when filtering collections. For example, if the above is your standard field setting, you might want to change it when a filter paramter is set to size:
-
-```
-fields => ['tags' => 0.5, 'size' => 2, 'category' => 3]
+```php
+'fields' => 'tags'
 ```
 
-**Note that the factor is required when using multiple fields, even if you want to set the factor to the same value for each field. You can't set a simple array of fields.**
+**Multiple fields**
+
+You can also pass multiple fields as array:
+
+```php
+'fields' => ['tags', 'size', 'category']
+```
+
+In this case, all fields get the same factor 1.
+
+You can also pass an associative array with a factor for each field:
+
+```php
+'fields' => ['tags' => 1, 'size' => 1.5, 'category' => 3]
+```
+
+You might want to change the factor of individual fields when filtering collections to get better result. For example, assign a higher factor dynamically if the filter parameter is set to `size`:
+
+```php
+'fields' => ['tags' => 0.5, 'size' => 2, 'category' => 1]
+```
 
 #### delimiter
 
 The delimiter that you use to separate values in a field
-Default: ,
+Default: `,`
 
 #### threshold
 
 The minimum Jaccard Index, i.e. a value between 0 (no similarity) and 1 (full similarity)
-Default: 0.1
+Default: `0.1`
 
 #### languageFilter
 
 Filter similar items by language in a multi-language installation.
-Default: false
+Default: `false`
 
 
 ## License

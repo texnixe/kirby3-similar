@@ -10,7 +10,7 @@ use Kirby\Exception\Exception;
 /**
  * Kirby 3 Similar Plugin
  *
- * @version   1.0.3
+ * @version   3.0.0
  * @author    Sonja Broda <hello@sonjabroda.com>
  * @copyright Sonja Broda <hello@sonjabroda.com>
  * @link      https://github.com/texnixe/kirby3-similar

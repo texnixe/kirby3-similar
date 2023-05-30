@@ -9,7 +9,10 @@ use Kirby\Cms\File;
 use Kirby\Cms\Files;
 use Kirby\Cms\Page;
 use Kirby\Cms\Pages;
+use Kirby\Cms\User;
+use Kirby\Cms\Users;
 use Kirby\Exception\DuplicateException;
+use Kirby\Exception\Exception;
 use Kirby\Exception\InvalidArgumentException;
 use Kirby\Toolkit\A;
 
@@ -18,68 +21,69 @@ class Similar
     /**
      * Cache object
      *
-     * @var Cache $cache
+     * @var Cache|null $cache
      */
-    protected static $cache;
+    protected static ?Cache $cache = null;
 
     /**
      * Delimiter
      *
      * @var string
      */
-    protected $delimiter;
+    protected string $delimiter;
 
     /**
      * Single field as string or multiple fields as array
      *
-     * @var mixed
+     * @var string|array
      */
-    protected $fields;
+    protected string|array $fields;
 
     /**
      * Collection to search in
      *
-     * @var Files|Pages
+     * @var Files|Pages|Users
      */
-    protected $index;
+    protected Files|Pages|Users $index;
 
     /**
      * Filter results by language
      *
      * @var bool
      */
-    protected $languageFilter;
+    protected bool $languageFilter;
 
     /**
      * Threshold for results to count
      *
      * @var float
      */
-    protected $threshold;
+    protected float $threshold;
 
     /**
      * Base object
      *
-     * @var File|Page $base File or page object.
+     * @var File|Page|User $base File or page object.
      */
-    protected $base;
+    protected File|Page|User $base;
 
     /**
      * Collection type
      *
-     * @var Files|Pages $collection
+     * @var Files|Pages|Users $collection
      */
-    protected $collection;
+    protected Files|Pages|Users $collection;
 
     /**
      * User options
      *
      * @var array
      */
-    protected $options;
+    protected array $options;
 
-    public function __construct($base, $collection, array $options)
+    public function __construct(File|Page|User $base, Files|Pages|Users $collection, array $options)
     {
+
         $defaults              = option('texnixe.similar.defaults');
         $defaults['index']     = $base->siblings(false);
         $this->options         = array_merge($defaults, $options);
@@ -88,7 +92,7 @@ class Similar
         $this->delimiter       = $this->options['delimiter'];
         $this->fields          = $this->options['fields'];
         $this->index           = $this->options['index'];
-        $this->languageFilter  = $this->options['delimiter'];
+        $this->languageFilter  = $this->options['languageFilter'];
         $this->threshold       = $this->options['threshold'];
     }
 
@@ -116,7 +120,7 @@ class Similar
     {
         try {
             return static::cache()->flush();
-        } catch (InvalidArgumentException $e) {
+        } catch (InvalidArgumentException) {
             return false;
         }
     }
@@ -125,14 +129,15 @@ class Similar
     /**
      * Returns the similarity index
      *
-     * @param mixed $item
+     * @param File|Page $item
      * @param array $searchItems
      *
      * @return float
      */
-    protected function calculateSimilarityIndex($item, array $searchItems): float
+    protected function calculateSimilarityIndex(File|Page|User $item, array $searchItems): float
     {
         $indices = [];
+
         foreach ($searchItems as $field => $value) {
             $itemFieldValues = $item->{$field}()->split($this->delimiter);
             $intersection    = count(array_intersect($value[$field], $itemFieldValues));
@@ -141,20 +146,22 @@ class Similar
                 $indices[] = number_format($intersection / $union * $value['factor'], 5);
             }
         }
+
         if (($indexCount = count($indices)) !== 0) {
             return array_sum($indices) / $indexCount;
         }
 
-        return (float)0;
+        return 0.0;
     }
 
     /**
      * Fetches similar pages
      *
-     * @return Files|Pages
+     * @return Files|Pages|Users
+     * @throws Exception
      * @throws InvalidArgumentException
      */
-    public function getData()
+    public function getData(): Files|Pages|Users
     {
         // initialize new collection based on type
         $similar  = $this->collection;
@@ -184,90 +191,80 @@ class Similar
      *
      * @return array
      * @throws InvalidArgumentException
+     * @throws Exception
      */
     protected function getSearchItems(): array
     {
         $searchItems  = [];
         $fields       = $this->fields;
-        if (is_array($fields)) {
-            if (A::isAssociative($fields)) {
-                foreach ($fields as $field => $factor) {
-                    if (is_string($field) === false) {
-                        throw new InvalidArgumentException('Field array must be simple array or associative array');
-                    }
-                    // only include fields that have values
-                    $values = $this->base->{$field}()->split($this->delimiter);
-                    if (count($values) > 0) {
-                        $searchItems[$field][$field]    = $values;
-                        $searchItems[$field]['factor']  = $factor;
-                    }
-                }
-            } else {
-                foreach ($fields as $field) {
-                    // only include fields that have values
-                    $values = $this->base->{$field}()->split($this->delimiter);
-                    if (count($values) > 0) {
-                        $searchItems[$field][$field]    = $values;
-                        $searchItems[$field]['factor']  = 1;
-                    }
-                }
-            }
+
+        if (!is_string($fields) && !is_array($fields)) {
+            throw new InvalidArgumentException('Fields must be provided as string or array');
         }
+
         if (is_string($fields)) {
             $field                         = $fields;
             $searchItems[$field][$field]   = $this->base->{$field}()->split($this->delimiter);
             $searchItems[$field]['factor'] = 1;
+
+            return $searchItems;
         }
-        return $searchItems;
+
+        if (A::isAssociative($fields)) {
+            return $this->searchItemsForAssociativeArray($fields);
+        }
+
+        return $this->searchItemsForIndexArray($fields);
+
     }
 
     /**
      * Returns similar pages
      *
-     * @return Files|Pages
+     * @return Files|Pages|Users
      * @throws DuplicateException
+     * @throws Exception
      * @throws InvalidArgumentException
      * @throws JsonException
      */
-    public function getSimilar()
+    public function getSimilar(): Files|Pages|Users
     {
         // try to get data from the cache, else create new
         if (option('texnixe.similar.cache') === true && $response = static::cache()->get(md5($this->version() . $this->base->id() . json_encode($this->options, JSON_THROW_ON_ERROR)))) {
             foreach ($response as $key => $data) {
                 $this->collection->add($key);
             }
-            $similar = $this->collection;
-        // else fetch new data and store in cache
-        } else {
-            // make sure we store no old stuff in the cache
-            if (option('texnixe.similar.cache') === false) {
-                static::cache()->flush();
-            }
-            $similar = $this->getData();
-            static::cache()->set(
-                md5($this->version() . $this->base->id() . json_encode($this->options, JSON_THROW_ON_ERROR)),
-                $similar->toArray(),
-                option('texnixe.similar.expires')
-            );
+            return $this->collection;
         }
 
-        return $similar;
-    }
+        // else fetch new data and store in cache
+        // make sure we store no old stuff in the cache
+        if (option('texnixe.similar.cache') === false) {
+            static::cache()->flush();
+        }
+        $this->collection = $this->getData();
+        static::cache()->set(
+            md5($this->version() . $this->base->id() . json_encode($this->options, JSON_THROW_ON_ERROR)),
+            $this->collection->toArray(),
+            option('texnixe.similar.expires')
+        );
 
+        return $this->collection;
+
+    }
 
     /**
      * Filters items by Jaccard Index
      *
      * @param array $searchItems
      *
-     * @return Files|Pages|\Kirby\Toolkit\Collection
+     * @return Files|Pages|Users
      */
-    protected function filterByJaccardIndex(array $searchItems)
+    protected function filterByJaccardIndex(array $searchItems): Files|Pages|Users
     {
-        return $this->index->map(function ($item) use ($searchItems) {
-            $item->jaccardIndex = $this->calculateSimilarityIndex($item, $searchItems);
-            return $item;
-        })->filterBy('jaccardIndex', '>=', $this->threshold)->sortBy('jaccardIndex', 'desc');
+        return $this->index
+        ->filter(fn ($item) => $this->calculateSimilarityIndex($item, $searchItems) >= $this->threshold)
+        ->sortBy(fn ($item) => $this->calculateSimilarityIndex($item, $searchItems),'desc');
     }
 
     /**
@@ -275,15 +272,14 @@ class Similar
      *
      * @param $similar
      *
-     * @return Files|Pages
+     * @return Files|Pages|Users
      */
-    protected function filterByLanguage($similar)
+    protected function filterByLanguage($similar): Files|Pages|Users
     {
         if (kirby()->multilang() === true && ($language = kirby()->language())) {
-            $similar = $similar->filter(function ($item) use ($language) {
-                return $item->translation($language->code())->exists();
-            });
+            $similar = $similar->filter(fn ($item) => $item->translation($language->code())->exists());
         }
+
         return $similar;
     }
 
@@ -295,5 +291,53 @@ class Similar
     public function version()
     {
         return Kirby::plugin('texnixe/similar')->version()[0];
+    }
+
+    /**
+     * Return seach items for associative array
+     * @param array $fields
+     * @return array
+     * @throws InvalidArgumentException
+     */
+    private function searchItemsForAssociativeArray(array $fields): array
+    {
+        $searchItems = [];
+
+        foreach ($fields as $field => $factor) {
+            if (is_string($field) === false) {
+                throw new InvalidArgumentException('Field array must be simple array or associative array');
+            }
+            // only include fields that have values
+            $values = $this->base->{$field}()->split($this->delimiter);
+            if (count($values) > 0) {
+                $searchItems[$field][$field]    = $values;
+                $searchItems[$field]['factor']  = $factor;
+            }
+        }
+
+        return $searchItems;
+    }
+
+    /**
+     * Return search items for an indexed array
+     *
+     * @param array $fields
+     * @return array
+     */
+    private function searchItemsForIndexArray(array $fields): array
+    {
+        $searchItems = [];
+
+        foreach ($fields as $field) {
+            // only include fields that have values
+            $values = $this->base->{$field}()->split($this->delimiter);
+            if (count($values) > 0) {
+                $searchItems[$field][$field]    = $values;
+                $searchItems[$field]['factor']  = 1;
+            }
+        }
+
+        return $searchItems;
+
     }
 }

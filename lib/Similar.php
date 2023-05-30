@@ -9,11 +9,12 @@ use Kirby\Cms\File;
 use Kirby\Cms\Files;
 use Kirby\Cms\Page;
 use Kirby\Cms\Pages;
+use Kirby\Cms\User;
+use Kirby\Cms\Users;
 use Kirby\Exception\DuplicateException;
 use Kirby\Exception\Exception;
 use Kirby\Exception\InvalidArgumentException;
 use Kirby\Toolkit\A;
-use Kirby\Toolkit\Collection;
 
 class Similar
 {
@@ -41,7 +42,7 @@ class Similar
     /**
      * Collection to search in
      *
-     * @var Files|Pages
+     * @var Files|Pages|Users
      */
     protected Files|Pages|Users $index;
 
@@ -319,7 +320,7 @@ class Similar
 
     /**
      * Return search items for an indexed array
-     * 
+     *
      * @param array $fields
      * @return array
      */
